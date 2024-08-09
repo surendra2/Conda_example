@@ -1,0 +1,25 @@
+package: 
+  name: my-package 
+  version: "0.1.0" 
+ 
+source: 
+  path: .. 
+ 
+build: 
+  number: 1 
+  script: python setup.py install 
+ 
+requirements: 
+  host: 
+    - python 
+  run: 
+    - python 
+ 
+test: 
+  commands: 
+    - python -c "import my_package.hello" 
+ 
+about: 
+  home: http://example.com 
+  license: MIT 
+  summary: "A simple Conda package example." 

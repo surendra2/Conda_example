@@ -1,0 +1,31 @@
+version: 2.1 
+ 
+executors: 
+  conda-executor: 
+    docker: 
+      - image: continuumio/miniconda3 
+ 
+jobs: 
+  build: 
+    executor: conda-executor 
+    steps: 
+      - checkout 
+      - run: 
+          name: Install Conda Build 
+          command: conda install conda-build awscli -c conda-forge 
+      - run: 
+          name: Build Conda Package 
+          command: conda build conda-recipe --output-folder /tmp/conda-bld 
+      - run: 
+          name: Upload Conda Package to S3 
+          command: | 
+            aws s3 cp /tmp/conda-bld/my-package-0.1.0-py38_0.tar.bz2 s3://your-private-conda-channel/ 
+      - run: 
+          name: Clean up 
+          command: conda clean --all --yes 
+ 
+workflows: 
+  version: 2 
+  build_and_upload: 
+    jobs: 
+      - build 

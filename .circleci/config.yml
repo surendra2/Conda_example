@@ -1,18 +1,18 @@
-version: 2.1 
- 
-executors: 
-  conda-executor: 
-    docker: 
-      - image: continuumio/miniconda3 
- 
-jobs: 
-  build: 
-    executor: conda-executor 
-    steps: 
-      - checkout 
-      - run: 
-          name: Install Conda Build 
-          command: conda install conda-build awscli -c conda-forge 
+version: 2.1
+
+executors:
+  conda-executor:
+    docker:
+      - image: continuumio/miniconda3
+
+jobs:
+  build:
+    executor: conda-executor
+    steps:
+      - checkout
+      - run:
+          name: Install Conda Build and AWS CLI
+          command: conda install conda-build awscli -c conda-forge
       - run:
           name: Build Conda Package
           command: |
@@ -26,7 +26,6 @@ jobs:
             ls -l /tmp/conda-bld/linux-64
             echo "Listing contents of /tmp/conda-bld/noarch:"
             ls -l /tmp/conda-bld/noarch
-
       - run:
           name: Upload to Another Git Repo
           command: |
@@ -44,24 +43,33 @@ jobs:
             # Clone the repository using HTTPS with a Personal Access Token
             git clone https://surendra2:${GITHUB_TOKEN}@github.com/surendra2/conda-store.git
             cd conda-store
-            git checkout -b packages || git checkout packages
             
             # Configure Git user
             git config --global user.email "surendranagula@gmail.com"
             git config --global user.name "surendra nagula"
             
+            # Checkout the branch or create it if it doesn't exist
+            git checkout packages || git checkout -b packages
+            
             # Copy the package to the repo
             cp ${PACKAGE_PATH} .
             git add ${PACKAGE_NAME}
             git commit -m "Add new Conda package ${PACKAGE_NAME}"
-            git pull origin packages --rebase
+            
+            # Pull and rebase to handle conflicts
+            git pull origin packages --rebase || {
+              echo "Merge conflict encountered. Resolving..."
+              git rebase --abort
+              git pull origin packages --no-rebase
+            }
+            
             git push origin packages
-      - run: 
-          name: Clean up 
-          command: conda clean --all --yes 
- 
-workflows: 
-  version: 2 
-  build_and_upload: 
-    jobs: 
+      - run:
+          name: Clean up
+          command: conda clean --all --yes
+
+workflows:
+  version: 2
+  build_and_upload:
+    jobs:
       - build

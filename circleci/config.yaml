@@ -13,20 +13,48 @@ jobs:
       - run: 
           name: Install Conda Build 
           command: conda install conda-build awscli -c conda-forge 
-      - run: 
-          name: Build Conda Package 
-          command: conda build conda-recipe --output-folder /tmp/conda-bld 
+      - run:
+          name: Build Conda Package
+          command: |
+            conda build conda-recipe --output-folder /tmp/conda-bld
+            echo "Listing contents of /tmp/conda-bld:"
+            ls -l /tmp/conda-bld
+      - run:
+          name: Debug Package Directory
+          command: |
+            echo "Listing contents of /tmp/conda-bld/linux-64:"
+            ls -l /tmp/conda-bld/linux-64
+            echo "Listing contents of /tmp/conda-bld/noarch:"
+            ls -l /tmp/conda-bld/noarch
+
       - run:
           name: Upload to Another Git Repo
           command: |
-            PACKAGE_PATH=$(conda build . --output)
-            git clone git@github.com:surendra2/conda-store.git
+            # Find the package file
+            PACKAGE_PATH=$(find /tmp/conda-bld/linux-64 -name '*.tar.bz2' | head -n 1)
+            
+            if [ -z "$PACKAGE_PATH" ]; then
+              echo "No package file found, aborting."
+              exit 1
+            fi
+            
+            PACKAGE_NAME=$(basename ${PACKAGE_PATH})
+            echo "Found package: ${PACKAGE_NAME}"
+            
+            # Clone the repository using HTTPS with a Personal Access Token
+            git clone https://surendra2:${GITHUB_TOKEN}@github.com/surendra2/conda-store.git
             cd conda-store
-            git checkout -b packages
+            git checkout -b packages || git checkout packages
+            
+            # Configure Git user
+            git config --global user.email "surendranagula@gmail.com"
+            git config --global user.name "surendra nagula"
+            
+            # Copy the package to the repo
             cp ${PACKAGE_PATH} .
-            git add .
-            git commit -m "Add new Conda package"
-            git push origin packages 
+            git add ${PACKAGE_NAME}
+            git commit -m "Add new Conda package ${PACKAGE_NAME}"
+            git push origin packages
       - run: 
           name: Clean up 
           command: conda clean --all --yes 

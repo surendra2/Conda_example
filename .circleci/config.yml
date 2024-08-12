@@ -30,11 +30,11 @@ jobs:
       - run:
           name: Upload to Another Git Repo
           command: |
-            # Find the package file in the correct directory
+            # Find the package file
             PACKAGE_PATH=$(find /tmp/conda-bld/linux-64 -name '*.tar.bz2' | head -n 1)
             
             if [ -z "$PACKAGE_PATH" ]; then
-              echo "No package file found in /tmp/conda-bld/linux-64, aborting."
+              echo "No package file found, aborting."
               exit 1
             fi
             
@@ -46,13 +46,15 @@ jobs:
             cd conda-store
             git checkout -b packages || git checkout packages
             
+            # Configure Git user
+            git config --global user.email "surendranagula@gmail.com"
+            git config --global user.name "surendra nagula"
+            
             # Copy the package to the repo
             cp ${PACKAGE_PATH} .
             git add ${PACKAGE_NAME}
             git commit -m "Add new Conda package ${PACKAGE_NAME}"
             git push origin packages
-
-
       - run: 
           name: Clean up 
           command: conda clean --all --yes 

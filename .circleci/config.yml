@@ -20,31 +20,38 @@ jobs:
             echo "Listing contents of /tmp/conda-bld:"
             ls -l /tmp/conda-bld
       - run:
-          name: Debug File Locations
+          name: Debug Package Directory
           command: |
-            echo "Listing contents of /tmp/conda-bld:"
-            ls -l /tmp/conda-bld
+            echo "Listing contents of /tmp/conda-bld/linux-64:"
+            ls -l /tmp/conda-bld/linux-64
+            echo "Listing contents of /tmp/conda-bld/noarch:"
+            ls -l /tmp/conda-bld/noarch
+
       - run:
           name: Upload to Another Git Repo
           command: |
-            # Find the package path
-            PACKAGE_PATH=$(ls /tmp/conda-bld | grep '.tar.bz2' | head -n 1)
-            echo "Found package: ${PACKAGE_PATH}"
+            # Find the package file in the correct directory
+            PACKAGE_PATH=$(find /tmp/conda-bld/linux-64 -name '*.tar.bz2' | head -n 1)
+            
             if [ -z "$PACKAGE_PATH" ]; then
-              echo "No package file found, aborting."
+              echo "No package file found in /tmp/conda-bld/linux-64, aborting."
               exit 1
             fi
+            
+            PACKAGE_NAME=$(basename ${PACKAGE_PATH})
+            echo "Found package: ${PACKAGE_NAME}"
+            
             # Clone the repository
             git clone git@github.com:surendra2/conda-store.git
             cd conda-store
-            # Create a new branch or checkout existing one
             git checkout -b packages || git checkout packages
+            
             # Copy the package to the repo
-            cp /tmp/conda-bld/${PACKAGE_PATH} .
-            git add ${PACKAGE_PATH}
-            git commit -m "Add new Conda package ${PACKAGE_PATH}"
+            cp ${PACKAGE_PATH} .
+            git add ${PACKAGE_NAME}
+            git commit -m "Add new Conda package ${PACKAGE_NAME}"
             git push origin packages
-      
+
 
       - run: 
           name: Clean up 

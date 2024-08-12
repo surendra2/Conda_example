@@ -41,8 +41,8 @@ jobs:
             PACKAGE_NAME=$(basename ${PACKAGE_PATH})
             echo "Found package: ${PACKAGE_NAME}"
             
-            # Clone the repository
-            git clone git@github.com:surendra2/conda-store.git
+            # Clone the repository using HTTPS with a Personal Access Token
+            git clone https://surendra2:${GITHUB_TOKEN}@github.com/surendra2/conda-store.git
             cd conda-store
             git checkout -b packages || git checkout packages
             

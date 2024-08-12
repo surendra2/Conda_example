@@ -13,9 +13,17 @@ jobs:
       - run: 
           name: Install Conda Build 
           command: conda install conda-build awscli -c conda-forge 
-      - run: 
-          name: Build Conda Package 
-          command: conda build conda-recipe --output-folder /tmp/conda-bld 
+      - run:
+          name: Build Conda Package
+          command: |
+            conda build conda-recipe --output-folder /tmp/conda-bld
+            echo "Listing contents of /tmp/conda-bld:"
+            ls -l /tmp/conda-bld
+      - run:
+          name: Debug File Locations
+          command: |
+            echo "Listing contents of /tmp/conda-bld:"
+            ls -l /tmp/conda-bld
       - run:
           name: Upload to Another Git Repo
           command: |
@@ -36,11 +44,7 @@ jobs:
             git add ${PACKAGE_PATH}
             git commit -m "Add new Conda package ${PACKAGE_PATH}"
             git push origin packages
-      - run:
-          name: Debug File Locations
-          command: |
-            echo "Listing contents of /tmp/conda-bld:"
-            ls -l /tmp/conda-bld
+      
 
       - run: 
           name: Clean up 

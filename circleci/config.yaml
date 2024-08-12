@@ -16,10 +16,17 @@ jobs:
       - run: 
           name: Build Conda Package 
           command: conda build conda-recipe --output-folder /tmp/conda-bld 
-      - run: 
-          name: Upload Conda Package to S3 
-          command: | 
-            aws s3 cp /tmp/conda-bld/my-package-0.1.0-py38_0.tar.bz2 s3://your-private-conda-channel/ 
+      - run:
+          name: Upload to Another Git Repo
+          command: |
+            PACKAGE_PATH=$(conda build . --output)
+            git clone git@github.com:surendra2/conda-store.git
+            cd conda-store
+            git checkout -b packages
+            cp ${PACKAGE_PATH} .
+            git add .
+            git commit -m "Add new Conda package"
+            git push origin packages 
       - run: 
           name: Clean up 
           command: conda clean --all --yes 
@@ -28,4 +35,4 @@ workflows:
   version: 2 
   build_and_upload: 
     jobs: 
-      - build 
+      - build

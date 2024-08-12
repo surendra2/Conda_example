@@ -19,14 +19,24 @@ jobs:
       - run:
           name: Upload to Another Git Repo
           command: |
-            PACKAGE_PATH=$(conda build . --output)
+            # Find the package path
+            PACKAGE_PATH=$(ls /tmp/conda-bld | grep '.tar.bz2' | head -n 1)
+            echo "Found package: ${PACKAGE_PATH}"
+            if [ -z "$PACKAGE_PATH" ]; then
+              echo "No package file found, aborting."
+              exit 1
+            fi
+            # Clone the repository
             git clone git@github.com:surendra2/conda-store.git
             cd conda-store
-            git checkout -b packages
-            cp ${PACKAGE_PATH} .
-            git add .
-            git commit -m "Add new Conda package"
-            git push origin packages 
+            # Create a new branch or checkout existing one
+            git checkout -b packages || git checkout packages
+            # Copy the package to the repo
+            cp /tmp/conda-bld/${PACKAGE_PATH} .
+            git add ${PACKAGE_PATH}
+            git commit -m "Add new Conda package ${PACKAGE_PATH}"
+            git push origin packages
+
       - run: 
           name: Clean up 
           command: conda clean --all --yes 
